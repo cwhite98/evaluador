@@ -2,7 +2,6 @@
 #include<semaphore.h>
 #pragma once
 
-
 struct Header{
     int rBlood;
     int rDet;
@@ -16,11 +15,15 @@ struct Examen{
     int numCola;
     char tipo;
     int numeroMuestras;
-    //int id;
+    int id;
+    int tiempo;
+    int resultado;
 };
 
 struct Cola {
-    int cantidad;
+    int tamano;
     std::vector <Examen> cola;
     sem_t *mutex;
 };
+
+struct Cola skin, blood, detritus;
