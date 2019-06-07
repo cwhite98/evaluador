@@ -4,10 +4,13 @@ all: evaluador delMem
 
 #VPATH := src include bin
 
-LDFLAGS= -pthread #-lrt
+LDFLAGS= -pthread -lrt
 
 #$(SCRDIR)/reg.o: reg.cpp elementos.h reg.h 
 reg.o: reg.cpp elementos.h reg.h
+	$(CXX) -o $@ $(LDFLAGS) -c $<
+
+rep.o: rep.cpp elementos.h rep.h
 	$(CXX) -o $@ $(LDFLAGS) -c $<
 
 #$(SCRDIR)/init.o: init.cpp elementos.h init.h
@@ -19,11 +22,11 @@ delMem.o: delMem.cpp
 	$(CXX) -o $@ $(LDFLAGS) -c $<
 
 #$(SCRDIR)/evaluador.o: evaluador.cpp reg.h
-evaluador.o: evaluador.cpp reg.h init.h
+evaluador.o: evaluador.cpp reg.h init.h rep.h
 	$(CXX) -o $@ $(LDFLAGS) -c $<
 
 #$(BINDIR)/evaluador: evaluador.o reg.o init.o #delMem.o 
-evaluador: evaluador.o reg.o init.o #delMem.o 
+evaluador: evaluador.o reg.o init.o rep.o #delMem.o 
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 #$(BINDIR)delMem: delMem.o
