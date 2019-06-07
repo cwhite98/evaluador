@@ -36,19 +36,18 @@ void Reg::leerArchivo(string archivo, string nombreSeg) {
     munmap(dir0,sizeof(struct Header));
     dir0 = mmap(NULL,sizeof(struct Header)+ sizeof(struct Examen)*numColasE*tamColasE + sizeof(struct Examen)*tamColasS, PROT_READ | PROT_WRITE, MAP_SHARED,fd,0);
     Examen *pCola[numColasE];
-    void* dir = ((char*)dir0) + sizeof(struct Header);
-    pCola[0] = (struct Examen*) dir;
-    void *dir1;
+    void* dir[numColasE];
+    dir[0] = ((char*)dir0) + sizeof(struct Header);
+    pCola[0] = (struct Examen*) dir[0];
     for(int i = 1;i < numColasE; i++) {
-        dir1 = ((char*)dir) + sizeof(struct Examen) *  pHeader->tamColasE;
-        pCola[i] = (struct Examen*) dir1;
+        dir[i] = ((char*)dir[i-1]) + sizeof(struct Examen) *  pHeader->tamColasE;
+        pCola[i] = (struct Examen*) dir[i];
     }
 
     string word;
     int numMuestras;
     int numCola;
     char tipo;
-
     sem_t *vacios[numColasE], *llenos[numColasE], *mutex[numColasE];
 
     for (int i = 0; i < numColasE ; i++ ){
@@ -67,17 +66,27 @@ void Reg::leerArchivo(string archivo, string nombreSeg) {
         tipo = word[0u];
         file >> word;
         numMuestras = stoi(word);
+        if(numMuestras < 0 || numMuestras > 5) {
+            continue;
+        }
+        if(numCola > tamColasE +1 || numCola < 0) {
+            continue;
+        }
         cout << "esta vacio?" << endl;
-        copia = pCola[numCola-1];
-        sem_wait(vacios[numCola -1]);
-        sem_wait(mutex[numCola -1]);
-        while (copia->numeroMuestras != 0) copia = (struct Examen*) ((char*)copia) +sizeof(struct Examen);
+        copia = pCola[numCola];
+        sem_wait(vacios[numCola]);
+        sem_wait(mutex[numCola]);
+        while (copia->numeroMuestras != 0){
+            copia = (struct Examen*) ((char*)copia) +sizeof(struct Examen);
+        }
         copia->tipo = tipo;
         copia->numeroMuestras = numMuestras;
+        cout << copia->numeroMuestras << endl;
         copia->numCola = numCola;
         copia->id = id;
-        sem_post(mutex[numCola -1]);
-        sem_post(llenos[numCola -1]);
+        sem_post(mutex[numCola]);
+        sem_post(llenos[numCola]);
+        salida << id << endl;
         id++;
     }
     

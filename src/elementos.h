@@ -7,6 +7,7 @@ struct Header{
     int numColasE;
     int tamColasE;
     int tamColasS;
+    int tamColasI;
 };
 
 struct Examen{

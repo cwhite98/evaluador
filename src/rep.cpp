@@ -24,19 +24,17 @@ void Rep::report(string segName, char c, int i) {
   int tamColasS = pHeader->tamColasS;
   munmap(dir0,sizeof(struct Header));
     dir0 = mmap(NULL,sizeof(struct Header)+ sizeof(struct Examen)*numColasE*tamColasE + sizeof(struct Examen)*tamColasS, PROT_READ | PROT_WRITE, MAP_SHARED,fd,0);
-    Examen *pCola[numColasE];
+    Examen *pCola[numColasE+1];
     void* dir[numColasE];
     dir[0] = ((char*)dir0) + sizeof(struct Header);
     pCola[0] = (struct Examen*) dir[0];
-    for(int i = 1;i < numColasE; i++) {
+    for(int i = 1;i < numColasE+1; i++) {
         dir[i] = ((char*)dir[i-1]) + sizeof(struct Examen) *  pHeader->tamColasE;
         pCola[i] = (struct Examen*) dir[i];
     }
-    Examen *colaSalida = (struct Examen*)((char *) pCola[numColasE-1]) + (sizeof(struct Examen) * pHeader->tamColasE);
+    Examen *colaSalida = (struct Examen*)((char *) pCola[numColasE]);
     cout << colaSalida->id << endl;
     cout << colaSalida->numeroMuestras<<endl;
-
- 
   
   cout << "EmpezaraWhite"<< endl;
   cout << colaSalida->id<<endl;

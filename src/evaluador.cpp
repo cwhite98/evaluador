@@ -5,6 +5,8 @@
 #include <iostream>
 #include "reg.h"
 #include "init.h"
+#include "stop.h"
+#include "rep.h"
 //#include "elementos.h"
 
 using namespace std;
@@ -15,7 +17,11 @@ int main(int argc, char *argv[])
 	{
 		int opt;
 		int currentArg = 0;
-		if (string(argv[1]) == "init") {
+		if(string(argv[1]) == "stop") {
+			Stop stop;
+			stop.borrar(argv[2]);
+
+		} if (string(argv[1]) == "init") {
 			// siguen los comandos
 			int i =5;
 			int ie = 6;
@@ -83,7 +89,7 @@ int main(int argc, char *argv[])
 		else if (string(argv[1]) == "reg")
 		{
 			int argumentoActual = 2;
-			string nombreSeg = "evaluador";
+			string nombreSeg = "evaluator";
 			if (string(argv[2]) == "-n") {
 				//nombre del segmento de memoria
 				cout << "Se ingreso el segmento de memoria" << endl;
@@ -120,7 +126,9 @@ int main(int argc, char *argv[])
 			//mandar modo interactivo update
 		}
 		else if (string(argv[1]) == "rep") {
-			string nombreSegmento = "evaluador";
+			string nombreSegmento = "evaluator";
+			Rep rep;
+			rep.report(nombreSegmento,'i',3);
 			while ((opt = getopt(argc, argv, "s:i:m")) != -1) {
 				switch (opt)
 				{
