@@ -8,11 +8,13 @@
 #include <semaphore.h>
 #include "reg.h"
 #include "elementos.h"
+//#include "externas.h"
+#include "init.h"
 #include <fstream>
 
 using namespace std;
 
-Reg::Reg() : id(0) {}
+Reg::Reg() {}
 Reg::~Reg() {}
 
 void Reg::leerArchivo(string archivo, string nombreSeg) { 
@@ -60,6 +62,9 @@ void Reg::leerArchivo(string archivo, string nombreSeg) {
     }
 
     struct Examen *copia;
+    int random;
+    srand(time(NULL));
+    int max = 2000 + numColasE *tamColasE + tamColasS;
     while (file >> word) {
         numCola = stoi(word);
         file >> word;
@@ -79,6 +84,7 @@ void Reg::leerArchivo(string archivo, string nombreSeg) {
         while (copia->numeroMuestras != 0){
             copia = (struct Examen*) ((char*)copia) +sizeof(struct Examen);
         }
+        id = id + rand() %max + 1;
         copia->tipo = tipo;
         copia->numeroMuestras = numMuestras;
         cout << copia->numeroMuestras << endl;
@@ -87,7 +93,6 @@ void Reg::leerArchivo(string archivo, string nombreSeg) {
         sem_post(mutex[numCola]);
         sem_post(llenos[numCola]);
         salida << id << endl;
-        id++;
     }
     
     file.close();

@@ -19,7 +19,9 @@ using namespace std;
 Init::Init() {}
 Init::~Init() {}
 sem_t *mutexI[3], *vaciosI[3], *llenosI[3];
+sem_t *vaciosS, *llenosS, *mutexS;
 vector<Examen> blood, skin, detritus;
+int id;
 
 void Init::init(int i, int ie, int oe, string n, int b, int d, int s, int q) {
     int tamColasE = ie;
@@ -36,9 +38,7 @@ void Init::init(int i, int ie, int oe, string n, int b, int d, int s, int q) {
     // ftruncate amplia el segmento al tamaño que necesitamos
     ftruncate(fd, sizeof(struct Header) + (sizeof(struct Examen) * numColasE * tamColasE) + (sizeof(struct Examen) * tamColasS));
     void *dir = mmap(NULL, sizeof(struct Header) + ((sizeof(struct Examen) * numColasE * tamColasE) + ((sizeof(struct Examen) * tamColasS))), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    cout << dir<<endl;
-    cout <<"tamano " <<  (sizeof(struct Header) + ((sizeof(struct Examen) * numColasE * tamColasE) + ((sizeof(struct Examen) * tamColasS)))) << endl;
-    struct Header *pHeader = (struct Header *)dir;
+   struct Header *pHeader = (struct Header *)dir;
     pHeader->tamColasE = tamColasE;
     pHeader->tamColasI = tamColasI;
     pHeader->numColasE = numColasE;
@@ -46,8 +46,8 @@ void Init::init(int i, int ie, int oe, string n, int b, int d, int s, int q) {
     pHeader->rSkin = rSkin;
     pHeader->rDet = rDet;
     pHeader->tamColasS = tamColasS;
-    cout << "header" << sizeof(struct Header) << endl;
     close(fd);
+    
     evaluador(pHeader, segName,dir);
     munmap(dir, sizeof(struct Header) + (sizeof(struct Examen) * numColasE * tamColasE) + (sizeof(struct Examen) * tamColasS));
 }
@@ -67,13 +67,10 @@ void Init::evaluador(Header *pHeader, string segName, void* dir0) {
     Examen *pCola[numColasE+1];
     void* dir[numColasE];
     dir[0] = ((char*)dir0) + sizeof(struct Header); // Direccion Header + Tamano Header
-    cout << dir0<<endl;
     pCola[0] = (struct Examen*) ((char*)dir[0]); //primera direccion inicio cola
-    cout << 0  <<pCola[0] << endl;
     for(int i = 1;i < numColasE+1; i++) {
         dir[i] = ((char*)dir[i-1]) + (sizeof(struct Examen) *  pHeader->tamColasE); // Siguiente direccion 
         pCola[i] = (struct Examen*) ((char *)dir[i]); // Siguiente cola
-        cout << i << "  "<<dir[i] << endl;
     }
 
 
@@ -95,8 +92,7 @@ void Init::evaluador(Header *pHeader, string segName, void* dir0) {
         pi->i = 0;
         //Creacion hilo por cada cola
         pthread_create(&entrada[i], NULL, leerEntrada,pi);
-        cout <<"Se creo un hilo" << endl;
-        sleep(3);
+        sleep(1);
     }
 
     char letra = 'B';
@@ -116,40 +112,40 @@ void Init::evaluador(Header *pHeader, string segName, void* dir0) {
     }
 
     nombre = segName + "vaciosS";
-    sem_t *vaciosS = sem_open(nombre.c_str(), O_CREAT | O_EXCL, 0660, pHeader->tamColasS - 1);
+    vaciosS = sem_open(nombre.c_str(), O_CREAT | O_EXCL, 0660, pHeader->tamColasS-1);
     nombre = segName + "mutexS";
-    sem_t *mutexS = sem_open(nombre.c_str(), O_CREAT | O_EXCL, 0660, 1);
+    mutexS = sem_open(nombre.c_str(), O_CREAT | O_EXCL, 0660, 1);
     nombre = segName + "llenosS";
-    sem_t *llenosS = sem_open(nombre.c_str(), O_CREAT | O_EXCL, 0660, 0);
+    llenosS = sem_open(nombre.c_str(), O_CREAT | O_EXCL, 0660, 0);
 
     pthread_t thr_skin, thr_blood, thr_det;
 
-    pthread_info piSalida1;
-    piSalida1.llenos = llenosS;
-    piSalida1.mutex = mutexS;
-    piSalida1.vacios = vaciosS;
-    piSalida1.pHeader = pHeader;
-    piSalida1.pCola = (struct Examen *)((char *)pCola[numColasE]);
-    piSalida1.tamano = 0;
-    pthread_create(&thr_blood, NULL, procesar, &piSalida1);
+    pthread_info *piSalida1 = new pthread_info;
+    piSalida1->llenos = llenosS;
+    piSalida1->mutex = mutexS;
+    piSalida1->vacios = vaciosS;
+    piSalida1->pHeader = pHeader;
+    piSalida1->pCola = (struct Examen *)((char *)pCola[numColasE]);
+    piSalida1->tamano = 0;
+    pthread_create(&thr_blood, NULL, procesar, piSalida1);
 
-    pthread_info piSalida2;
-    piSalida2.llenos = llenosS;
-    piSalida2.mutex = mutexS;
-    piSalida2.vacios = vaciosS;
-    piSalida2.pHeader = pHeader;
-    piSalida2.pCola = (struct Examen *)((char *)pCola[numColasE]);
-    piSalida2.tamano = 1;
-    pthread_create(&thr_skin, NULL, procesar, &piSalida2);
+    pthread_info *piSalida2 = new pthread_info; 
+    piSalida2->llenos = llenosS;
+    piSalida2->mutex = mutexS;
+    piSalida2->vacios = vaciosS;
+    piSalida2->pHeader = pHeader;
+    piSalida2->pCola = (struct Examen *)((char *)pCola[numColasE]);
+    piSalida2->tamano = 1;
+    pthread_create(&thr_skin, NULL, procesar, piSalida2);
 
-    pthread_info piSalida;
-    piSalida.pCola = (struct Examen *)((char *)pCola[numColasE]);
-    piSalida.llenos = llenosS;
-    piSalida.mutex = mutexS;
-    piSalida.vacios = vaciosS;
-    piSalida.pHeader = pHeader;
-    piSalida.tamano = 2;
-    pthread_create(&thr_det, NULL, procesar, &piSalida);
+    pthread_info *piSalida = new pthread_info;
+    piSalida->pCola = (struct Examen *)((char *)pCola[numColasE]);
+    piSalida->llenos = llenosS;
+    piSalida->mutex = mutexS;
+    piSalida->vacios = vaciosS;
+    piSalida->pHeader = pHeader;
+    piSalida->tamano = 2;
+    pthread_create(&thr_det, NULL, procesar, piSalida);
 
     for (int i = 0; i < numColasE; i++) {
         pthread_join(entrada[i], NULL);
@@ -199,6 +195,8 @@ void *Init::leerEntrada(void *arg) {
         examen.tiempo = random;
         cout << copia->tipo << endl;
         insertar(examen);
+        //Examen * res = copia;
+        copia->numeroMuestras = 0;
         i++;
 
         sem_post(args->mutex);
@@ -245,6 +243,7 @@ void Init::insertar(struct Examen examen) {
     struct Header *pHeader = args->pHeader;
     Examen ex;
     struct Examen *copia = colaSalida;
+    void* d;
     for (;;) {
         if (args->tamano == 0) {
             cout << "soy blood" << endl;
@@ -261,12 +260,16 @@ void Init::insertar(struct Examen examen) {
             ex = leerIntermedia(2, &detritus, 20, 5, pHeader);
             cout << "Det resultado" << ex.resultado << endl;
         }
-        sem_wait(args->vacios);
-        sem_wait(args->mutex);
+        sem_wait(vaciosS);
+        sem_wait(mutexS);
+
         cout << "ANTES deL WHILE" << endl;
+        copia = colaSalida;
         while (copia->numeroMuestras != 0) {
-            copia = (struct Examen *)((char *)copia) + sizeof(struct Examen);
+            d = ((char *)copia) + sizeof(struct Examen) ;
+            copia = (struct Examen*) d;
         }
+
         copia->id = ex.id;
         copia->resultado = ex.resultado;
         copia->numCola = ex.numCola;
@@ -274,8 +277,9 @@ void Init::insertar(struct Examen examen) {
         copia->tiempo = ex.tiempo;
         copia->tipo = ex.tipo;
 
-        sem_post(args->mutex);
-        sem_post(args->llenos);
+
+        sem_post(mutexS);
+        sem_post(llenosS);
     }
 }
 
@@ -284,27 +288,27 @@ Examen Init::leerIntermedia(int tipo, vector<Examen> *q, int max, int min, struc
     Examen ex;
     srand(time(NULL));
     cout << "Leyendo colas intermedias " << endl;
-    cout << "###" << tipo << endl;
     sem_wait(llenosI[tipo]);
     cout << "Paso " << endl;
     sem_wait(mutexI[tipo]);
     cout << "Pase mutex" << endl;
     if (tipo == 0) {
-        cout << "front " << endl;
         ex = blood.back();
         cout << "Numero meustras leerI Blood " <<ex.numeroMuestras << endl;
-        cout << "pop" << endl;
+        cout << ex.id << endl;
         blood.pop_back();
     }
     else if (tipo == 1) {
         ex = skin.back();
         skin.pop_back();
          cout << "Numero meustras leerI Skin " <<ex.numeroMuestras << endl;
+         cout << ex.id << endl;
     }
     else {
         ex = detritus.back();
         detritus.pop_back();
         cout << "Numero meustras leerI Detr " <<ex.numeroMuestras << endl;
+        cout << ex.id << endl;
     }
     for (int i = 0; i < ex.numeroMuestras; i++) {
         random = rand() % max + min;
@@ -337,4 +341,12 @@ Examen Init::leerIntermedia(int tipo, vector<Examen> *q, int max, int min, struc
     sem_post(vaciosI[tipo]);
 
     return ex;
+}
+
+sem_t* Init::getSemLlenos() {
+   return llenosS;
+}
+
+sem_t* Init::getSemMutex(){
+    return mutexS;
 }

@@ -16,6 +16,9 @@ class Init {
         static void insertar(struct Examen);
         static void* leerEntrada(void *arg);
         static void* procesar(void *arg);
+        int* getId();
+        sem_t* getSemLlenos();
+        sem_t* getSemMutex();
         static Examen leerIntermedia(int tipo, vector<Examen>*q,int max, int min, struct Header *pHeader);
     
     private:
@@ -24,7 +27,6 @@ class Init {
 struct pthread_info{
         void *pCola;
         int numHilo;
-        //char *pCola;
         sem_t *mutex;
         sem_t *vacios;
         sem_t *llenos;

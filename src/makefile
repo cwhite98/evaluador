@@ -9,7 +9,7 @@ LDFLAGS= -pthread #-lrt
 #$(SCRDIR)/reg.o: reg.cpp elementos.h reg.h 
 stop.o: stop.cpp stop.h
 #$(SCRDIR)/reg.o: reg.cpp elementos.h reg.h 
-reg.o: reg.cpp elementos.h reg.h
+reg.o: reg.cpp elementos.h reg.h externas.h
 	$(CXX) -o $@ $(LDFLAGS) -c $<
 
 rep.o: rep.cpp elementos.h rep.h
