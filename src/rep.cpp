@@ -40,15 +40,12 @@ void Rep::report(string segName, char c, int i) {
   }
 
   Init init;
-  nombre = segName + "vaciosS";
-  sem_t *vaciosS =  sem_open(nombre.c_str(), 0);
+  sem_t *vaciosS =  init.getSemVacios();
   sem_t *mutexS = init.getSemMutex();
   sem_t *llenosS = init.getSemLlenos();
   void *d;
   Examen *copia = pCola[numColasE];
-  cout << copia->numeroMuestras << endl;
   if (c == 'i') {
-    cout << "ENTRE A I" << endl;
     int pos;
     while (true) {
       sem_wait(llenosS);
@@ -75,12 +72,10 @@ void Rep::report(string segName, char c, int i) {
           pos = 0;
           copia =  pCola[numColasE];
         }
-        cout << "rep while" << endl;
       }
 
       sem_post(mutexS);
       sem_post(vaciosS);
-      cout << "Esperando " << endl;
       sleep(i);
       
     }
@@ -113,7 +108,7 @@ void Rep::report(string segName, char c, int i) {
       pos = 0;
       copia = pCola[numColasE];
       
-      while (revisado.size() < i) {
+      while (revisado.size() < (unsigned)i) {
         if (pos2 == 0) {
           copia = pCola[numColasE];
         }   else{
@@ -129,7 +124,6 @@ void Rep::report(string segName, char c, int i) {
              << copia->tipo << " "
              << copia->resultado << endl;
           revisado.unique();
-          cout << "$$$$$$$$$$ "<<revisado.size() << endl;
           res->numeroMuestras = 0;
         }
         pos2++;
@@ -138,7 +132,6 @@ void Rep::report(string segName, char c, int i) {
             pos = 0;
             copia =  pCola[numColasE];
         }
-        cout << "rep while" << endl;
       }
       pos = pos2;
       sem_post(mutexS);
